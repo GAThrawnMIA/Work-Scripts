@@ -1,0 +1,402 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+	<title>Windows-To-Go Hardware Details</title>
+	<HTA:APPLICATION 
+		APPLICATIONNAME="Windows-To-Go Hardware Details" 
+		BORDER="normal" 
+		CONTEXTMENU="no"
+		ICON="magnify.exe"
+		INNERBORDER="no"
+		MAXIMIZEBUTTON="yes" 
+		MINIMIZEBUTTON="yes" 
+		SCROLL="auto" 
+		SELECTION="yes"
+		SHOWINTASKBAR="yes"
+		SINGLEINSTANCE="yes" 
+		SYSMENU="yes"
+		VERSION="1.1"
+		WINDOWSTATE="normal" />
+
+<!-- 
+Hardware Details thingy
+-----------------------
+1.0 Jun 2015	JPB	First version
+1.1	Jan 2016	JPB	Add "All Hardware" listing
+-->
+		
+<script language="vbscript" type="text/vbscript">
+Option Explicit
+Dim objWMIService, objShell, objEnvVar, strWMIMachineName, strUserName, strMachineName
+strWMIMachineName = "."
+
+
+'Const VBBINARYCOMPARE = 0 'Binary comparison (case sensitive) 
+'Const VBTEXTCOMPARE = 1 'Text Comparison (case insensitive) 
+'Const VBDATABASECOMPARE = 2 'Compare information inside database 
+
+
+Sub Window_Onload
+	'Move and Resize window
+	'window.resizeTo 375,570
+	'window.moveTo 100,5
+	
+	hideNode("otherhardware")
+	hideNode("allhardware")
+	
+	Set objWMIService = GetObject("winmgmts:" & "{impersonationLevel=impersonate}!\\" & strWMIMachineName & "\root\cimv2")
+	Set objShell = CreateObject("WScript.Shell")
+	Set objEnvVar = objShell.Environment("PROCESS")
+	
+	GetMainDetails
+	GetOSDetails
+	GetVideoDetails
+	GetNetworkDetails
+	
+	
+End Sub
+
+Sub GetMainDetails
+	Dim strUser, colComputer, objComputer, strMachineMake, strMachineModel
+	Dim colChassis, objChassis, strChassisSerial, strBIOSAsset, strChassisType, strChassisTypeText, strOSName
+	strUserName = objEnvVar("USERNAME")
+	strUser = objEnvVar("USERDOMAIN")  & "\" & strUserName
+	
+	Set colComputer = objWMIService.ExecQuery ("Select * from Win32_ComputerSystem")
+	For Each objComputer in colComputer
+		strMachineName = objComputer.Name
+		strMachineMake = objComputer.Manufacturer
+		strMachineModel = objComputer.Model
+	Next
+	
+	Set colChassis = objWMIService.ExecQuery("Select * from Win32_SystemEnclosure")
+	For Each objChassis in colChassis
+		strChassisSerial = objChassis.SerialNumber
+		strBIOSAsset = objChassis.SMBIOSAssetTag
+				
+		For Each strChassisType in objChassis.ChassisTypes
+	    ' http://technet.microsoft.com/en-us/library/ee156537.aspx
+		Select Case strChassisType
+			Case 8,9,10,12,14
+				strChassisTypeText = "laptop (" & strChassisType & ")"
+			Case 11
+				strChassisTypeText = "laptop/handheld/tablet (" & strChassisType & ")"
+			Case 13
+				strChassisTypeText = "all-in-one (" & strChassisType & ")"
+			Case Else
+				strChassisTypeText = "desktop (" & strChassisType & ")"
+			End Select
+		Next
+	Next
+	
+	If strBIOSAsset <> "" Then
+		machasset.innerText = " (" & strBIOSAsset & ")"
+	End If
+	
+	machuser.innerText = strUser
+	machname.innerText = strMachineName
+	machmake.innerText = strMachineMake
+	machmodel.innerText = strMachineModel
+	machserial.innerText = strChassisSerial
+	machchassistype.innerText = strChassisTypeText
+End Sub
+
+Sub GetOSDetails
+	Dim colOS, objOS, strIsPortableOS, strOSName, strServicePack, strInstallDate, strBootTime
+	Set colOS = objWMIService.ExecQuery ("Select * from Win32_OperatingSystem")
+	For Each objOS in colOS
+		On Error Resume Next
+		strOSName = objOS.Caption
+		strIsPortableOS = objOS.PortableOperatingSystem
+		strServicePack = objOS.CSDVersion
+		strInstallDate = ConvertWMIDate(objOS.InstallDate)
+		strBootTime = ConvertWMIDate(objOS.LastBootUpTime)
+		On Error GoTo 0
+	Next 
+	osportable.innerText = strIsPortableOS
+	osname.innerText = strOSName & " " & strServicePack
+	osinstall.innerText = strInstallDate
+	osboot.innerText = strBootTime
+End Sub
+
+Sub GetVideoDetails
+	Dim colVideo, objVideo, strCurrentVidDriver, strVidPnPDevID, strVidProc, strGenericDriver
+	Set colVideo = objWMIService.ExecQuery ("Select * from Win32_VideoController")
+	For Each objVideo in colVideo
+		strCurrentVidDriver = objVideo.Caption
+		strVidPnPDevID = objVideo.PNPDeviceID
+		strVidProc = objVideo.VideoProcessor
+	Next
+	If strCurrentVidDriver = "Microsoft Basic Display Adapter" Then 
+		strGenericDriver = "False, using built-in generic driver"
+	Else
+		strGenericDriver = "True, using manufacturer's driver"
+	End If
+	videocurrentdriver.innerText = strCurrentVidDriver
+	videogenericdriver.innerText = strGenericDriver
+	videoprocessor.innertext = strVidProc
+	videopnpid.innerText = strVidPnPDevID
+End Sub
+
+Sub GetNetworkDetails
+	Dim objNIC, colNICs, strNICDesc, strNICType, strNICMAC, strNICMake, strNICTable, strNetID
+	Set colNICs = objWMIService.ExecQuery ("Select * from Win32_NetworkAdapter where Availability = '3' AND ConfigManagerErrorCode = '0'")
+	For Each objNIC in colNICs
+		strNICDesc = objNIC.Description
+		strNICType = objNIC.AdapterType
+		strNICMAC = objNIC.MACAddress
+		strNICMake = objNIC.Manufacturer
+		strNetID = objNIC.NetConnectionID
+		strNICTable = strNICTable & "<tr><td>" & strNetID & "</td><td>" & strNICDesc & "</td><td>" & strNICType & "</td><td>" & strNICMAC & "</td></tr>"
+	Next
+	
+	If Len(strNICTable) > 5 Then
+		netcurrentdriver.innerHTML = "<h3>Network devices fully installed</h3><table><thead><tr><th>Network Type</th><th>Name</th><th>Type</th><th>Unique ID</th></tr></thead>" & strNICTable & "</table>"
+	Else
+		netcurrentdriver.innerHTML = "<h3>Network devices fully installed</h3><p>None found.</p>"
+	End If
+
+	Dim colPnP, objPnP, strPnPCaption, strPnPDescription, strPnPDeviceID, strNetworkNoDriverTable, strHardwareTable
+	'Devices with no driver installed (ConfigManagerErrorCode 28 means no driver installed https://msdn.microsoft.com/en-us/library/aa394353%28v=vs.85%29.aspx)
+	Set colPnP = objWMIService.ExecQuery ("Select * from Win32_PnPEntity where ConfigManagerErrorCode = '28'")
+	For Each objPnP in colPnP
+		strPnPCaption = objPnP.Caption
+		strPnPDescription = objPnP.Description
+		strPnPDeviceID = objPnP.DeviceID
+		If (InStr(1,strPnPCaption,"wireless",vbTextCompare) OR InStr(1,strPnPCaption,"wifi",vbTextCompare) OR InStr(1,strPnPCaption,"net",vbTextCompare)) Then
+			strNetworkNoDriverTable = strNetworkNoDriverTable & "<tr><td>" & strPnPCaption & "</td><td>" & strPnPDescription & "</td><td>" & strPnPDeviceID & "</td></tr>" 
+		End If
+		strHardwareTable = strHardwareTable & "<tr><td>" & strPnPCaption & "</td><td>" & strPnPDescription & "</td><td>" & strPnPDeviceID & "</td></tr>"
+	Next
+	If Len(strHardwareTable) > 5 Then
+		otherhardware.innerHTML = "<table><thead><tr><th>Type</th><th>Description</th><th>Device ID</th></tr></thead>" & strHardwareTable & "</table>"
+		If Len(strNetworkNoDriverTable) > 5 Then
+			strNetworkNoDriverTable = "<table><thead><tr><th>Type</th><th>Description</th><th>Device ID</th></tr></thead>" & strNetworkNoDriverTable & "</table>"
+		Else
+			strNetworkNoDriverTable = "<p>None found</p>"
+		End If
+	Else
+			strNetworkNoDriverTable = "<p>None</p>"
+	End If
+	netnodriver.innerHTML = "<h3>Network devices missing drivers</h3>" & strNetworkNoDriverTable
+	
+	Dim colPnPAll, objPnPAll, strPnPAllCaption, strPnPAllDescription, strPnPAllDeviceID, strAllHWTable,strDriverInstalled
+	'All Devices whether or not driver is installed (ConfigManagerErrorCode 28 means no driver installed https://msdn.microsoft.com/en-us/library/aa394353%28v=vs.85%29.aspx)
+	Set colPnPAll = objWMIService.ExecQuery ("Select * from Win32_PnPEntity")
+	For Each objPnPAll in colPnPAll
+		strPnPAllCaption = objPnPAll.Caption
+		strPnPAllDescription = objPnPAll.Description
+		strPnPAllDeviceID = objPnPAll.DeviceID
+		If objPnPAll.ConfigManagerErrorCode = "28" Then
+			strDriverInstalled = "<b>no</b>"
+		Else
+			strDriverInstalled = "yes"
+		End If
+		strAllHWTable = strAllHWTable & "<tr><td>" & strPnPAllCaption & "</td><td>" & strPnPAllDescription & "</td><td>" & strDriverInstalled & "</td><td>" & strPnPAllDeviceID & "</td></tr>" 
+	Next
+	
+	If Len(strAllHWTable) > 5 Then
+		allhardware.innerHTML = "<table><thead><tr><th>Type</th><th>Description</th><th>Driver Installed</th><th>Device ID</th></tr></thead>" & strAllHWTable & "</table>"
+	Else
+			allhardware.innerHTML = "<p>None</p>"
+	End If
+End Sub
+
+Function ConvertWMIDate(strWMIDate)
+	'WMI fields like "Last boot up time" give a string like: 20140409153852.086000+060
+	'This breaks down into yyyymmddhhmmss.xxxxxx+timezone
+	'Returns normal UK formatted date & time
+	ConvertWMIDate =  Mid(strWMIDate,7,2) & "/" & Mid(strWMIDate,5,2) & "/" & Left(strWMIDate,4) & " " & Mid(strWMIDate,9,2) & ":" & Mid(strWMIDate,11,2) & ":" & Mid(strWMIDate,13,2)
+End Function
+
+Sub OpenExternalProg(strProgram)
+	Dim strPath
+	Select Case strProgram
+		Case "SoftwareCentre"
+			strPath = "C:\Windows\CCM\SCClient.exe"
+		Case Else
+			Exit Sub
+	End Select
+	objShell.Run(strPath)
+End Sub
+
+
+Sub MailSupport
+	Dim strRecipient, strSubject, strBody
+	strRecipient = "Lloyds-Software-Delivery; Blatchford, James"
+	strSubject = "Windows To Go hardware & drivers report for " & strUserName & " on " & strMachineName
+	strBody = hardwaredetails.innerHTML
+	SendAnEmail strRecipient, strSubject, strBody
+End Sub
+
+Sub SendAnEmail(strRecipient, strSubject, strBody)
+	Dim objOutlook, objMail
+	Set objOutlook = CreateObject("Outlook.Application")
+	Set objMail = objOutlook.CreateItem(0)
+	With objMail
+		.To = strRecipient
+		' .CC = ""
+		' .BCC = ""
+		.Subject = strSubject
+		'.Body = strBody
+		.HTMLBody = strBody
+		.Display	' or use .Send
+	End With
+	
+	'Clear the memory
+	Set objOutlook = Nothing
+	Set objMail = Nothing
+End Sub
+
+</script>
+
+<!-- 
+PCI Vendor IDs 
+
+0x1002  ATI / AMD graphics
+0x10DE  Nvidia
+0x163C  intel
+0x8086  Intel
+0x8087  Intel
+0x102B    Matrox
+0x10A9  Silicon Graphics
+0x5333  S3 Graphics Co., Ltd
+-->
+
+
+
+<script language="javascript">
+//JavaScript is doing display/interaction type stuff whereas vbScript is doing the driver checking/WMI queries
+
+//Close the window if the user presses Escape
+document.onkeyup = KeyCheck; // run this function whenever a key is pressed
+function KeyCheck()
+{
+	var KeyID = event.keyCode;
+	switch(KeyID)
+	{
+		// User presses the escape key
+		case 27:
+		window.close();
+		break;
+	}
+}
+
+// From jardSuite
+// Takes one argument, a record id (recordid below)
+// Looks for two parts of a page by the following html IDs "s[recordid]" and "r[recordid]-cntnt".
+// The first one has its contents destroyed and recreated to indicate state, the second has its CSS display
+// property altered to toggle it hidden or visible
+function ExpandoCntnr(RowName)	// was ShowHide() in jardSuite kbase 0.95a (jardSubs 0.48b) and prior
+{
+	var SymName = 's'+RowName;
+	RowName = RowName;
+	if (document.getElementById(RowName).style.display == "none")
+	{
+		showNode(RowName);
+		changeText(SymName,String.fromCharCode(57504));
+	}
+	else
+	{
+		hideNode(RowName);
+		changeText(SymName,String.fromCharCode(57505));
+	}
+}
+
+function changeText(container,newText)	
+{
+	var TextCntnr = document.getElementById(container);
+	while (TextCntnr.hasChildNodes())
+		{TextCntnr.removeChild(TextCntnr.lastChild);}
+	TextCntnr.appendChild(document.createTextNode(newText));
+	return TextCntnr;
+}
+
+function showNode(element)
+{
+	document.getElementById(element).style.display = "block";
+}
+
+function hideNode(element)
+{
+	document.getElementById(element).style.display = "none";
+}
+
+</script>
+
+<style type="text/css">
+body	{font-family: "Segoe UI"; font-size: 100%;}
+h1, h2, h3	{ font-weight: lighter; font-size: 3em}
+h2	{font-size: 1.8em}
+h3	{font-size: 1.4em}
+p, table, td, th, button	{font-size: 1em}
+.symbols	{font-family: "Segoe UI Symbol"}
+.icon	{font-size: 2em; display: block;}
+.w8-button	{font-size: 1em; color: #ffffff; border:0px; margin: 5px}
+.w8-tile	{color: #ffffff; padding: 5px; margin: 10px;}
+.w8-tile td, .w8-tile th {color: #ffffff;}
+.w8-d-blue	{background-color: #0099ab;}
+.w8-l-blue	{background-color: #2d87ef;}
+.w8-green	{background-color: #009900;}
+.w8-red	{background-color: #d9522c;}
+.w8-yellow{background-color: #fba919;}
+</style>
+
+</head>
+<body>
+<h1>Hardware Details</h1>
+
+<div id="hardwaredetails">
+
+<div class="w8-tile w8-l-blue">
+<table>
+<tr><td>Logged on As</td><td><span id="machuser"></span></td></tr>
+<tr><td>Machine Name</td><td><span id="machname"></span></td></tr>
+<tr><td>Make</td><td><span id="machmake"></span></td></tr>
+<tr><td>Model</td><td><span id="machmodel"></span></td></tr>
+<tr><td>Type</td><td><span id="machchassistype"></span></td></tr>
+<tr><td>Serial (and asset tag)</td><td><span id="machserial"></span> <span id="machasset"></span></td></tr>
+<tr><td>OS</td><td><span id="osname"></span></td></tr>
+<tr><td>Windows-to-Go?</td><td><span id="osportable"></span></td></tr>
+<tr><td>Build Date</td><td><span id="osinstall"></span></td></tr>
+<tr><td>Last Bootup</td><td><span id="osboot"></span></td></tr>
+</table>
+</div>
+
+<div class="w8-tile w8-green">
+<h2>Network</h2>
+<div id="netcurrentdriver"></div>
+
+<div id="netnodriver"></div>
+</div>
+
+<div class="w8-tile w8-d-blue">
+<h2>Graphics</h2>
+<table>
+<tr><td>Current driver</td><td><span id="videocurrentdriver"></span></td></tr>
+<tr><td>Specific driver?</td><td><span id="videogenericdriver"></span></td></tr>
+<tr><td>Video Processor</td><td><span id="videoprocessor"></span></td></tr>
+<tr><td>Device ID</td><td><span id="videopnpid"></span></td></tr>
+</table>
+</div>
+
+<div class="w8-tile w8-yellow">
+<h2 onClick="ExpandoCntnr('otherhardware')">Other Driverless Hardware <span id="sotherhardware" class="symbols">&#xE0A1;</span></h2>
+<div id="otherhardware">none</div>
+</div>
+
+<div class="w8-tile w8-l-blue">
+<h2 onClick="ExpandoCntnr('allhardware')">All Hardware <span id="sallhardware" class="symbols">&#xE0A1;</span></h2>
+<div id="allhardware">none</div>
+</div>
+
+</div>
+<p align="center"><button onClick="MailSupport()" class="w8-button w8-l-blue"><span class="symbols icon">&#xE120;</span> <br /> Send Details</button>
+<button onClick="OpenExternalProg('SoftwareCentre')" class="w8-button w8-green"><span class="symbols icon">&#xE2B4;</span> <br /> Open Software Centre</button>
+<button onClick="window.close()" title="Close Window" class="w8-button w8-red"><span class="symbols icon">&#xE10A;</span> <br /> Close Window</button>  
+</p>
+
+
+<p><!-- James Blatchford, -->Software Devilry, 2015</p>
+</body>
+</html>
