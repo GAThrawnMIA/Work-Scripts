@@ -1,0 +1,315 @@
+<html> 
+<head>
+
+<title>World Clock</title>
+<HTA:APPLICATION
+     ID="objWorldClockHTA"  
+     APPLICATIONNAME="World Clock"
+     CONTEXTMENU= "no"
+     ICON="intl.cpl"
+     INNERBORDER="no"
+     MAXIMIZEBUTTON="no" 
+     MINIMIZEBUTTON="yes" 
+     SHOWINTASKBAR="yes" 
+     SINGLEINSTANCE="yes" 
+     SYSMENU="yes" 
+     SCROLL="no" 
+     VERSION="1.5" 
+     WINDOWSTATE="normal"/> 
+</head> 
+
+<script language="VBScript">
+	window.resizeTo 1060,226
+</script>
+
+<script language="VBScript">
+Dim CurrentDate,CurrTZmins,CurrTZText,CurrentDateUTC,USDST,EUDST,iTimerID,TimeDilationFactor
+
+Sub Window_onLoad
+	GetCurrentTimeZone
+	tickClock
+	iTimerID = window.setInterval("tickClock", 1000)
+End Sub
+
+Sub ExitProgram
+	window.close()
+End Sub
+    
+Sub tickClock
+	CurrentDate=NOW()
+	myVBSClock
+End Sub
+
+Sub myVBSClock
+	Dim strEUDateTime, strUKDateTime
+	CurrentDateUTC=DateAdd("n",(CurrTZmins*-1),CurrentDate)
+	myClock.innertext = WeekdayName(Weekday(CurrentDate), True) & ", " & CurrentDate  & " " & CurrTZText
+	If CurrTZmins<>0 Then 
+		myClockUTC.innertext = "("& CurrentDateUTC &" UTC)"
+	End If
+	strUKDateTime = WeekdayName(Weekday(DateAdd("h",EUDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",EUDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",EUDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",EUDST,CurrentDateUTC),vbShorttime)
+	UKClock.innerText = strUKDateTime
+	CGOClock.innerText = WeekdayName(Weekday(DateAdd("h",-6+USDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",-6+USDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",-6+USDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",-6+USDST,CurrentDateUTC),vbShorttime)
+	NYCClock.innerText = WeekdayName(Weekday(DateAdd("h",-5+USDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",-5+USDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",-5+USDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",-5+USDST,CurrentDateUTC),vbShorttime)
+	TORClock.innerText = WeekdayName(Weekday(DateAdd("h",-5+USDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",-5+USDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",-5+USDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",-5+USDST,CurrentDateUTC),vbShorttime)
+	RDJClock.innerText = WeekdayName(Weekday(DateAdd("h",-3+BRDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",-3+BRDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",-3+BRDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",-3+BRDST,CurrentDateUTC),vbShorttime)
+	SHAClock.innerText = WeekdayName(Weekday(DateAdd("h",8,CurrentDateUTC)), True) & " " & Day(DateAdd("h",8,CurrentDateUTC)) & "/" & Month(DateAdd("h",8,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",8,CurrentDateUTC),vbShorttime)
+	BJGClock.innerText = WeekdayName(Weekday(DateAdd("h",8,CurrentDateUTC)), True) & " " & Day(DateAdd("h",8,CurrentDateUTC)) & "/" & Month(DateAdd("h",8,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",8,CurrentDateUTC),vbShorttime)
+	HKOClock.innerText = WeekdayName(Weekday(DateAdd("h",8,CurrentDateUTC)), True) & " " & Day(DateAdd("h",8,CurrentDateUTC)) & "/" & Month(DateAdd("h",8,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",8,CurrentDateUTC),vbShorttime)
+	SINClock.innerText = WeekdayName(Weekday(DateAdd("h",8,CurrentDateUTC)), True) & " " & Day(DateAdd("h",8,CurrentDateUTC)) & "/" & Month(DateAdd("h",8,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",8,CurrentDateUTC),vbShorttime)
+	TKOClock.innerText = WeekdayName(Weekday(DateAdd("h",9,CurrentDateUTC)), True) & " " & Day(DateAdd("h",9,CurrentDateUTC)) & "/" & Month(DateAdd("h",9,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",9,CurrentDateUTC),vbShorttime)
+	SYDClock.innerText = WeekdayName(Weekday(DateAdd("h",10+AUDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",10+AUDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",10+AUDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",10+AUDST,CurrentDateUTC),vbShorttime)
+	DUBClock.innerText = strUKDateTime
+	strEUDateTime = WeekdayName(Weekday(DateAdd("h",1+EUDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",1+EUDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",1+EUDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",1+EUDST,CurrentDateUTC),vbShorttime)
+	MDRClock.innerText = strEUDateTime
+	PARClock.innerText = strEUDateTime
+	RTDClock.innerText = strEUDateTime
+	FKTClock.innerText = strEUDateTime
+	ZURClock.innerText = strEUDateTime
+	MILClock.innerText = strEUDateTime
+	SESClock.innerText = strEUDateTime
+	WRWClock.innerText = strEUDateTime
+	JNBClock.innerText = WeekdayName(Weekday(DateAdd("h",2,CurrentDateUTC)), True) & " " & Day(DateAdd("h",2,CurrentDateUTC)) & "/" & Month(DateAdd("h",2,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",2,CurrentDateUTC),vbShorttime)
+	DBIClock.innerText = WeekdayName(Weekday(DateAdd("h",4,CurrentDateUTC)), True) & " " & Day(DateAdd("h",4,CurrentDateUTC)) & "/" & Month(DateAdd("h",4,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",4,CurrentDateUTC),vbShorttime)
+
+	'India is 5 hours and 30 mins ahead of GMT, so using minutes in DateAdd, not hours
+	'INDClock.innerText = FormatDateTime(DateAdd("n",330,CurrentDateUTC),vbShortDate) &vbCrLf& FormatDateTime(DateAdd("n",330,CurrentDateUTC),vbShorttime)
+	
+End sub
+
+
+Sub GetCurrentTimeZone
+	'Numeric Time Zone (for the maths)
+	for each os in GetObject("winmgmts:").InstancesOf ("Win32_OperatingSystem")
+		CurrTZmins = os.CurrentTimeZone
+	next
+
+	'Text time zone (for the display on the top line)
+	for each tz in GetObject("winmgmts:").InstancesOf ("Win32_TimeZone")
+		CurrTZText = tz.Description
+	next
+End Sub
+
+'DaylightSavings/SummerTime Stuff
+'http://www.webexhibits.org/daylightsaving/g.html
+'China, Hong Kong, Singapore, Japan, South Africa,Dubai, India don't do hour changes
+'US(+Canada) and EU rules are below
+'Brazil, Australia rules also below (southern hemisphere, wrong way round)
+y = datepart("yyyy", date())
+USDST=0
+EUDST=0
+BRDST=0
+AUDST=0
+
+' US & Canada
+' Daylight Saving Time starts at 2am on the 2nd Sunday of March, ends at 2am on the 1st Sunday of November. Individual states decide if they want DST (Arizona, Indiana do not use DST)
+DST_USSpring = CalcDayLightBoundary(y, 3, 2, 2)
+DST_USFall = CalcDayLightBoundary(y, 11, 2, 1)
+'MsgBox "US Spring: " & DST_USSpring & ". US Fall: " & DST_USFall
+If (DST_USSpring < NOW()) AND (NOW() < DST_USFall) Then
+	'MsgBox "is US summer time"
+	USDST=1
+Else
+	'MsgBox "is not US summer time"
+End If
+
+' Brazil
+' Starts 3rd Sunday in October, ends 3rd Sunday in February
+DST_BRSpring = CalcDayLightBoundary(y, 10, 2, 3)
+DST_BRFall = CalcDayLightBoundary(y, 2, 2, 3)
+'Add one to time outside of these dates (as southern hemisphere)
+'MsgBox "BR Spring: " & DST_BRSpring & ". BR Fall: " & DST_BRFall
+If  (NOW() < DST_BRFall) OR (DST_BRSpring < NOW()) Then
+	'MsgBox "is BR summer time"
+	BRDST=1
+Else
+	'MsgBox "is not BR summer time"
+End If
+
+' Australia
+' Starts 1st Sunday in October, ends 1st Sunday in April
+DST_AUSpring = CalcDayLightBoundary(y, 10, 2, 1)
+DST_AUFall = CalcDayLightBoundary(y, 4, 2, 1)
+'Add one to time outside of these dates (as southern hemisphere)
+'MsgBox "AU Spring: " & DST_AUSpring & ". AU Fall: " & DST_AUFall
+If  (NOW() < DST_AUFall) OR (DST_AUSpring < NOW()) Then
+	'MsgBox "is AU summer time"
+	AUDST=1
+Else
+	'MsgBox "is not AU summer time"
+End If
+
+' European Union
+' Summer Time begins and ends at 1am UTC (GMT). Starts the last Sunday in March, ends the last Sunday in October. In the EU, all time zones change at the same moment.
+' Europe has last Sunday, rather than nth Sunday rules, so slightly different calc
+DST_EUSpring = (31 - (5*y/4 + 4) mod 7)
+DST_EUAutumn = (31 - (5*y/4 + 1) mod 7)
+'MsgBox "EU Spring: Sunday, " & DST_EUSpring & " March " & y & ". EU Autumn: Sunday, " & DST_EUAutumn & " October " & y
+If (DateValue(DST_EUSpring & " March " & y) < NOW()) AND (NOW() < DateValue(DST_EUAutumn & " October " & y)) Then
+	'MsgBox NOW() & " " &  "is EU summer time " 
+	EUDST=1
+Else
+	'MsgBox NOW() & " " & "is not EU summer time"
+End If
+
+Function CalcDayLightBoundary(Yr, Mon, Hr, Sun)	' Year, Month, time of day, which sunday (1st, 2nd, etc)
+    Dim dt, wd
+    dt = DateSerial(Yr, Mon, 1)
+    wd = Weekday(dt)
+    CalcDayLightBoundary = DateSerial(Yr, Mon, (Sun - 1) * 7 + ((8 - wd) Mod 7) + 1) + TimeSerial(Hr, 0, 0)
+End Function
+
+Function StopTime()
+	window.clearInterval(iTimerID)
+	TimeDilationFactor = 0
+	timedilation.innerText = TimeDilationFactor
+	delorean.style.display = "block"
+	tardis.style.display = "block"
+	hottub.style.display = "block"
+	fluxcapacitor.style.display = "inline"
+End Function
+
+Function StartTime()
+	tickClock
+        iTimerID = window.setInterval("tickClock", 1000)
+        TimeDilationFactor = 0
+        timedilation.innerText = TimeDilationFactor
+        delorean.style.display = "none"
+        tardis.style.display = "none"
+        hottub.style.display = "none"
+        fluxcapacitor.style.display = "none"
+End Function
+
+Function TimeTravel(hours)
+	CurrentDate=DateAdd("h",hours,CurrentDate)
+	TimeDilationFactor = TimeDilationFactor + hours
+	timedilation.innerText = TimeDilationFactor
+    	myVBSClock
+End Function
+
+Function RoundHour()
+	sMinutes = datepart("n", CurrentDate)
+	sSeconds = datepart("s", CurrentDate)
+	CurrentDate = DateAdd("s","-" & sSeconds,CurrentDate)
+	If sMinutes < 30 Then
+		CurrentDate = DateAdd("n","-" & sMinutes,CurrentDate)
+	Else
+		CurrentDate = DateAdd("n",60 - sMinutes,CurrentDate)
+	End If
+	myVBSClock
+End Function
+</script>
+
+<style>
+body	{background-color: #000000;font:14pt arial;color:white;}
+
+.clocktable	{font-weight: bold}
+table.clocktable span {font-family:monospace; font-size:10pt;}
+.timetravel td	{font-size:10pt}
+.americas	{color: #6EC9E0;}
+.ukeire	{color: #9EA900;}
+.asiapac	{color: #D81F2A;}
+.europe	{color: #AC2973;}
+.mideast	{color: #E0DB6E;}
+.africa	{color: #FF9900;}
+#billandted	{
+	position:absolute;
+	bottom:0;right:0;font:10pt;
+	clear:both;
+	border-style:inset;
+	border-width: 2px;
+	padding: 2px;
+	margin:1px;
+	filter:progid:DXImageTransform.Microsoft.Gradient(GradientType=1, StartColorStr='#0000FF', EndColorStr='#000000')
+	}
+#timedilation	{font-size:12pt; font-family: Consolas, Stencil, Courier New; padding: 2px;font-weight: bold}
+</style>
+
+<body>
+<div> <img id="fluxcapacitor" style="display:none" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAALPSURBVDjLjZNbSFNxHMcXm+BDBEFBvgRS9CBFrxJRoUlPs4ceJMiHsIshSTdSi7AI1K6KOfOSaZgXQmyic5u3TJ3zNue8TEvP5tl0czed7uy+nW//DV3ajQ58D+fh9/nwP/8fX85s9e1okkySVhKKhCEJqspvYKjoEnrykoOtD08zjbeOU++vxbYKUvdlFqbsjgbACYVDhgcWxfkwDApgVlbBOvUBFlUNVkYqsdxXCl1HIaiWfEzX5mCg6DKas0+BCAYiAnXtA9WWwKSoJHkHo7wcS18FWJS8BiV8htmGJ1BW3kXfy9SwoCg1RhURyCbpOIWsFwviCszUP8KIIA09+edBjg1ybFRfP4SytIOoyDiKhqcXUFFSgJI6cVxEEHr1zPskCr0XVocfbh8Lj5+FzRnAjMGNMdoFrdULyuJF27gFJe1ayRYcEYQiVbs+S9VOdpEMM54gDHY/Zo0eaAgo+76Bt1Id+0akbd4O7xCEIlSux7co7dQw5YBu1ReG2ydsKJXS88UiTfyv8G+CrdQPmvvHaQZjWgcEErrvTzP/FDQOmuQTegYKIihu0/T/t6BeZjohHDXTkzoHbEwAxnU/RGMmFDTNLYjTE0p7+XvorgQeK03i6kiydwhq+1eETUMmVmN2hzfhDbDYcAehs/nQXfYCynsn4Ra9AquWwNl4B6MZxwIdibybYbimzyjtnLJh2e6D0xuEj8CBIAuGfCv1LnRdPAwXgVHMB7L2AnmxsDw/A+lZrobT0DkVV9dvQK96DeYNfxgmbFhgdwXwbcWDrsQosIrQBn8+a7kHEPqdcBempWUYkMsgn7NCb3Fh3UlWaHSg/osWjz9OoCU5BkxVGkAgz30OVknodC7IPSztKNPfuqDI5WP46hEYsmJhzokCdWUXuvm8gCSJ+4Czvc6kwhSpMLNZ4XAXSIWDpMLMp5T9NtE5nnNzC0shOHR/PwBGKPcL7gZY5gAAAABJRU5ErkJggg==" /> 
+	<b><span ID=myClock class="ukeire"></span></b> &nbsp; <i><span ID=myClockUTC></span></i></div>
+<div style="position: absolute; bottom: 10px;">
+
+<Table BORDER="1" style="" class="clocktable">
+<TR>
+<TD title="Chicago IL - Central Time US &amp; Canada: GMT-6 (-5 in Summer)" class="americas">Chicago</TD>
+<TD title="USA - New York City &amp; Frankfort KY -  Eastern Time US &amp; Canada: GMT-5 (-4 in Summer)" class="americas">NYC/Kentucky</TD>
+<!-- <TD title="Frankfort, KY -  Eastern Time US &amp; Canada: GMT-5 (-4 in Summer)" class="americas">Kentucky</TD> -->
+<TD title="Canada - Toronto, Ontario &amp; Montreal, Quebec: North American Eastern Time, GMT-5 (-4 in Summer)" class="americas">Toronto/&#8203;Montreal</TD>
+<TD title="Rio de Janeiro, Brazil: GMT-3 (-2 in southern hemisphere summer)" class="americas">Rio de Janeiro</TD>
+<TD title="UK: GMT (GMT+1 in summer)" class="ukeire">UK</TD>
+<TD title="China: GMT+8 (no DST)" class="asiapac">Shanghai</TD>
+<TD title="China: GMT+8 (no DST)" class="asiapac">Beijing</TD>
+<TD title="Hong Kong, China: GMT+8 (no DST)" class="asiapac">Hong Kong</TD>
+<TD title="Singapore: GMT+8 (no DST)" class="asiapac">Singapore</TD>
+<TD title="Tokyo, Japan: GMT+9 (no DST)" class="asiapac">Tokyo</TD>
+<TD title="Sydney, NSW: GMT+10 (+11 in southern hemisphere summer)" class="asiapac">Sydney</TD>
+</TR>
+<TR>
+<TD class="americas"><span ID=CGOClock></span></TD>
+<TD class="americas"><span ID=NYCClock></span></TD>
+<!-- <TD class="americas"><span ID=KTYClock></span></TD> -->
+<TD class="americas"><span ID=TORClock></span></TD>
+<TD class="americas"><span ID=RDJClock></span></TD>
+<TD class="ukeire"><span ID=UKClock></span></TD>
+<TD class="asiapac"><span ID=SHAClock></span></TD>
+<TD class="asiapac"><span ID=BJGClock></span></TD>
+<TD class="asiapac"><span ID=HKOClock></span></TD>
+<TD class="asiapac"><span ID=SINClock></span></TD>
+<TD class="asiapac"><span ID=TKOClock></span></TD>
+<TD class="asiapac"><span ID=SYDClock></span></TD>
+</TR>
+</TABLE>
+
+<span style="font-size:4pt">&nbsp; </span>
+<TABLE BORDER="1" class="clocktable europe">
+<TR>
+<TD title="Dublin, Ireland: GMT (GMT+1 in summer)" class="ukeire">Dublin</TD>
+<TD title="Madrid, Spain: CET: GMT+1 (+2 in summer)">Madrid</TD>
+<TD title="Paris, France: CET: GMT+1 (+2 in summer)">Paris</TD>
+<TD title="Rotterdam, Netherlands: CET: GMT+1 (+2 in summer)">Rotterdam</TD>
+<TD title="Frankfurt, Germany: CET: GMT+1 (+2 in summer)">Frankfurt</TD>
+<TD title="Zurich, Switzerland: CET: GMT+1 (+2 in summer)">Zurich</TD>
+<TD title="Milan, Italy: CET: GMT+1 (+2 in summer)">Milan</TD>
+<TD title="Stockholm, Sweden: CET: GMT+1 (+2 in summer)">Stockholm</TD>
+<TD title="Warsaw, Poland: CET: GMT+1 (+2 in summer)">Warsaw</TD>
+<TD title="Johannesburg: South Africa Standard Time: GMT+2 (no DST)" class="africa">Jo'burg</TD>
+<!-- <TD title="GMT+5:30 (no DST)">India</TD> -->
+<TD title="Dubai, UAE: Arabian Standard Time: GMT+4 (no DST)" class="mideast">Dubai</TD>
+</TR>
+<TR>
+<TD class="ukeire"><span ID=DUBClock></span></TD>
+<TD><span ID=MDRClock></span></TD>
+<TD><span ID=PARClock></span></TD>
+<TD><span ID=RTDClock></span></TD>
+<TD><span ID=FKTClock></span></TD>
+<TD><span ID=ZURClock></span></TD>
+<TD><span ID=MILClock></span></TD>
+<TD><span ID=SESClock></span></TD>
+<TD><span ID=WRWClock></span></TD>
+<TD class="africa"><span ID=JNBClock></span></TD>
+<!-- <TD class="asiapac"><span ID=INDClock></span></TD> -->
+<TD class="mideast"><span ID=DBIClock></span></TD>
+</TR>
+</TABLE>
+</div>
+
+<!-- http://xkcd.com/now -->
+
+<div id="billandted">
+	<table class="timetravel">
+		<tr id="delorean" style="display:none">
+			<td><button onClick="TimeTravel(1)" >+1hr</button>&nbsp;<button onClick="TimeTravel(6)" >+6</button>&nbsp;<button onClick="TimeTravel(24)" >+24</button></td>
+			<td><span id="timedilation"></span>&nbsp; hrs from reality</td>
+		</tr>
+		<tr>
+			<td id="tardis" style="display:none"><button onClick="TimeTravel(-1)" >-1hr</button>&nbsp;<button onClick="TimeTravel(-6)" >-6</button>&nbsp;<button onClick="TimeTravel(-24)" >-24</button>
+			&nbsp;<button onClick="RoundHour()" title="Round to nearest hour">R</button></td>
+			<td><span id="hottub" style="display:none"><input type="radio" name="stoptime" id="start" onClick="StartTime()" /> <label for="start">Re-Start Time</label><br /></span>
+			<input type="radio" name="stoptime" id="stop" onClick="StopTime()" /> <label for="stop" title="Freeze and travel through time">Stop Time</label>&nbsp;</td>
+		</tr>
+	</table>
+</div>
+
+</body> 
+</html>
