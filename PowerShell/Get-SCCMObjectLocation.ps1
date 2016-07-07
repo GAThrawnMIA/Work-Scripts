@@ -33,14 +33,36 @@ root\Test\Test - James\[Device Collection] Adobe LiveCycle Servers
 
     #Find the container directly containing the item
     $ContainerItem = Get-WmiObject -Namespace root/SMS/site_$($SiteCode) -ComputerName $SiteServerName -Query "select * from SMS_ObjectContainerItem where InstanceKey = '$($SMSId)'"
-    If ([string]::IsNullOrEmpty($ContainerItem)) {
-        "no object containers found for $SMSId"
+    If (!$ContainerItem) {
+        Write-Warning "No object containers found for $SMSId"
         break;
     }
     #($ContainerItem).ObjectType
     #($ContainerItem).ObjectTypeName
     #($ContainerItem).ContainerNodeID
     $ContainerNodeId = ($ContainerItem).ContainerNodeID
+
+	If ($ContainerNodeId -is [array]) {
+        "Multiple objects"
+        ($ContainerItem[0]).ObjectTypeName
+        ($ContainerItem[1]).ObjectTypeName
+    }
+    Else {
+        #One object found
+        $OutputString = Get-SCCMContainerHierarchy -ContainerNodeId $ContainerNodeId -SiteCode $SiteCode -SiteServerName $SiteServerName
+    }
+    
+    Return "root\$OutputString"
+}
+
+Function Get-SCCMContainerHierarchy {
+    param(
+        [Parameter(Mandatory=$true,
+                Position=0)][string]$ContainerNodeId,
+        [Parameter(Mandatory=$true,
+                Position=1)][string]$SiteCode = (Get-CMSite).SiteCode,
+        [Parameter(Mandatory=$true,
+                Position=2)][string]$SiteServerName = (Get-CMSite).ServerName)
 
     <# Object Types
     2 = SMS_Package
@@ -53,9 +75,6 @@ root\Test\Test - James\[Device Collection] Adobe LiveCycle Servers
     }
 
     $OutputString = "[$ObjectType] $ObjectName"
-    $ContainerNodeId
-    #If ($ContainerNodeId -eq "") {break;}
-    #break;
     #ContainerNodeID of 0 is the root
     While ($ContainerNodeId -ne 0) {
         #Find details of that container
@@ -66,5 +85,5 @@ root\Test\Test - James\[Device Collection] Adobe LiveCycle Servers
         $ContainerNodeId = ($ContainerNode).ParentContainerNodeID
         $OutputString = "$ContainerName\$OutputString"
     }
-    "root\$OutputString"
+    Return $OutputString
 }
