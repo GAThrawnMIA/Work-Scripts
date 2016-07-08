@@ -20,7 +20,7 @@ root\Test\Test - James\[Device Collection] Adobe LiveCycle Servers
    Basic idea (and pointer to SMS_ObjectContainerNode and SMS_ObjectContainerItem) from Peter van der Woude's blog entry:
    https://www.petervanderwoude.nl/post/get-the-folder-location-of-an-object-in-configmgr-2012-via-powershell/
 .LINK
-    My link
+    https://github.com/GAThrawnMIA/Work-Scripts/blob/master/PowerShell/Get-SCCMObjectLocation.ps1
 #>
     param(
         [Parameter(Mandatory=$true,
@@ -33,16 +33,24 @@ root\Test\Test - James\[Device Collection] Adobe LiveCycle Servers
 
     #Find the container directly containing the item
     $ContainerItem = Get-WmiObject -Namespace root/SMS/site_$($SiteCode) -ComputerName $SiteServerName -Query "select * from SMS_ObjectContainerItem where InstanceKey = '$($SMSId)'"
-    If (!$ContainerItem) {
-        Write-Warning "No object containers found for $SMSId"
-        break;
-    }
     #($ContainerItem).ObjectType
     #($ContainerItem).ObjectTypeName
     #($ContainerItem).ContainerNodeID
+    If (!$ContainerItem) {
+        $ObjectName = Get-WmiObject -Namespace root/SMS/site_$($SiteCode) -ComputerName $SiteServerName -Query "select * from SMS_ObjectName where ObjectKey = '$($SMSId)'"
+        If (!$ObjectName) {
+            Write-Warning "No object containers found for $SMSId"
+            break;
+        }
+        Else
+        {
+            Return "root\$(($ObjectName).Name)"
+            break;
+        }
+    }
     $ContainerNodeId = ($ContainerItem).ContainerNodeID
 
-	If ($ContainerNodeId -is [array]) {
+    If ($ContainerNodeId -is [array]) {
         "Multiple objects"
         ($ContainerItem[0]).ObjectTypeName
         ($ContainerItem[1]).ObjectTypeName
@@ -51,7 +59,6 @@ root\Test\Test - James\[Device Collection] Adobe LiveCycle Servers
         #One object found
         $OutputString = Get-SCCMContainerHierarchy -ContainerNodeId $ContainerNodeId -SiteCode $SiteCode -SiteServerName $SiteServerName
     }
-    
     Return "root\$OutputString"
 }
 
@@ -63,18 +70,15 @@ Function Get-SCCMContainerHierarchy {
                 Position=1)][string]$SiteCode = (Get-CMSite).SiteCode,
         [Parameter(Mandatory=$true,
                 Position=2)][string]$SiteServerName = (Get-CMSite).ServerName)
-
-    <# Object Types
-    2 = SMS_Package
-    5000 = SMS_Collection_Device
-    #>
+    
     Switch (($ContainerItem).ObjectType) {
-        2 {$ObjectType = "Package"; $ObjectName = (Get-CMPackage -ID $SMSId).Name}
-        5000 {$ObjectType = "Device Collection"; $ObjectName = (Get-CMDeviceCollection -Id $SMSId).Name}
+        2       {$ObjectType = ($ContainerItem).ObjectTypeName; $ObjectName = (Get-CMPackage -ID $SMSId).Name} # "Package"
+        19      {$ObjectType = ($ContainerItem).ObjectTypeName; $ObjectName = (Get-CMBootImage -ID $SMSId).Name} #"Boot Image"
+        5000    {$ObjectType = ($ContainerItem).ObjectTypeName; $ObjectName = (Get-CMDeviceCollection -Id $SMSId).Name} # "Device Collection"
         default {$ObjectType = "unknown object type: $(($ContainerItem).ObjectType)"; $ObjectName = "unknown object name ($SMSId)"}
     }
 
-    $OutputString = "[$ObjectType] $ObjectName"
+    $OutputString = "$ObjectName `t[$ObjectType]"
     #ContainerNodeID of 0 is the root
     While ($ContainerNodeId -ne 0) {
         #Find details of that container
