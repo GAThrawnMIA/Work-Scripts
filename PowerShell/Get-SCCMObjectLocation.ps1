@@ -1,4 +1,4 @@
-Function Get-SCCMObjectLocation {
+﻿Function Get-SCCMObjectLocation {
 <#
 .Synopsis
    Searches for an SCCM object by ID and displays its path
@@ -8,15 +8,31 @@ Function Get-SCCMObjectLocation {
     An SCCM ID in the standard [3 letter site code][5 hex digits] format
 
     eg SMS00001
+.PARAMETER SiteCode
+    A three letter SCCM site code, eg "ABC"
+.PARAMETER SiteServerName
+    A resolvable name for an SCCM site server, eg "sccm01.company.com"
 .EXAMPLE
-   Get-SCCMObjectLocation -SMSId "LOL001BB"
-root\Live Legacy\Lync 2013 Fixes\[Package] Repair Send To Outlook post O2k13 MUI install
+    Get-SCCMObjectLocation -SMSId "ABC00166"
+root\Application Deployment\MS Access App-V 	[SMS_Collection_User]
 .EXAMPLE
-    Get-SCCMObjectLocation -SMSId "LOL00450"
-root\Test\Test - James\[Device Collection] Adobe LiveCycle Servers
+   Get-SCCMObjectLocation -SMSId "ABC001BB"
+root\Dell PowerEdge Drivers OM7.3.0\PE1950-Microsoft Windows 2008 R2 SP1-OM7.3 	[SMS_DriverPackage]
+.EXAMPLE
+    Get-SCCMObjectLocation -SMSId ABC000CC
+
+    WARNING: Multiple objects with ID: LOL000CC
+    root\x64\Win 7 Ent x64 with Office 2010 	[SMS_ImagePackage]
+    root\Server roles\All Domain Controllers 	[SMS_Collection_Device]
 .NOTES
-   Needs SCCM Console installed on the machine
-   James B
+   Needs the SCCM Console installed on the machine.
+   Needs to be run from the CMSite PSDrive (which should be automatically created if you run this from the console's "Connect via Windows PowerShell" menu option, or if you load the ConfigMgr PowerShell module, via:
+   Import-Module (Join-Path -Path (Split-Path -Parent $ENV:SMS_ADMIN_UI_PATH)\ConfigurationManager.psd1)
+   If you don't know it, you can change to the PSDrive using:
+   Set-Location -LiteralPath "$((Get-PSDrive -PSProvider CMSite).Name):"
+   
+   Written by James Blatchford, July 2016
+   
    Basic idea (and pointer to SMS_ObjectContainerNode and SMS_ObjectContainerItem) from Peter van der Woude's blog entry:
    https://www.petervanderwoude.nl/post/get-the-folder-location-of-an-object-in-configmgr-2012-via-powershell/
 .LINK
@@ -26,20 +42,16 @@ root\Test\Test - James\[Device Collection] Adobe LiveCycle Servers
         [Parameter(Mandatory=$true,
                 ValueFromPipeline=$true,
                 ValueFromPipelineByPropertyName=$true, 
-                ValueFromRemainingArguments=$false, 
                 Position=0)][string]$SMSId,
         [string]$SiteCode = (Get-CMSite).SiteCode,
         [string]$SiteServerName = (Get-CMSite).ServerName)
 
     #Find the container directly containing the item
     $ContainerItem = Get-WmiObject -Namespace root/SMS/site_$($SiteCode) -ComputerName $SiteServerName -Query "select * from SMS_ObjectContainerItem where InstanceKey = '$($SMSId)'"
-    #($ContainerItem).ObjectType
-    #($ContainerItem).ObjectTypeName
-    #($ContainerItem).ContainerNodeID
     If (!$ContainerItem) {
         $ObjectName = Get-WmiObject -Namespace root/SMS/site_$($SiteCode) -ComputerName $SiteServerName -Query "select * from SMS_ObjectName where ObjectKey = '$($SMSId)'"
         If (!$ObjectName) {
-            Write-Warning "No object containers found for $SMSId"
+            Write-Warning "No object or containers found for $SMSId"
             break;
         }
         Else
@@ -51,15 +63,20 @@ root\Test\Test - James\[Device Collection] Adobe LiveCycle Servers
     $ContainerNodeId = ($ContainerItem).ContainerNodeID
 
     If ($ContainerNodeId -is [array]) {
-        "Multiple objects"
-        ($ContainerItem[0]).ObjectTypeName
-        ($ContainerItem[1]).ObjectTypeName
+        Write-Warning "Multiple objects with ID: $SMSId"
+        Foreach ($Item In $ContainerItem) {
+            $tempOutputString = Get-SCCMContainerHierarchy -ContainerNodeId $Item.ContainerNodeID -ObjectType $Item.ObjectType -ObjectTypename $Item.ObjectTypeName -SiteCode $SiteCode -SiteServerName $SiteServerName
+            $OutputString = "$OutputString`nroot\$tempOutputString"
+        }
+        Return "$OutputString"
     }
     Else {
         #One object found
         $OutputString = Get-SCCMContainerHierarchy -ContainerNodeId $ContainerNodeId -SiteCode $SiteCode -SiteServerName $SiteServerName
+        Return "root\$OutputString"
     }
-    Return "root\$OutputString"
+    
+    
 }
 
 Function Get-SCCMContainerHierarchy {
@@ -69,23 +86,28 @@ Function Get-SCCMContainerHierarchy {
         [Parameter(Mandatory=$true,
                 Position=1)][string]$SiteCode = (Get-CMSite).SiteCode,
         [Parameter(Mandatory=$true,
-                Position=2)][string]$SiteServerName = (Get-CMSite).ServerName)
+                Position=2)][string]$SiteServerName = (Get-CMSite).ServerName,
+        [Parameter(Mandatory=$false)]$ObjectType = ($ContainerItem).ObjectType,
+        [Parameter(Mandatory=$false)]$ObjectTypeName = ($ContainerItem).ObjectTypeName)
     
-    Switch (($ContainerItem).ObjectType) {
-        2       {$ObjectType = ($ContainerItem).ObjectTypeName; $ObjectName = (Get-CMPackage -ID $SMSId).Name} # "Package"
-        19      {$ObjectType = ($ContainerItem).ObjectTypeName; $ObjectName = (Get-CMBootImage -ID $SMSId).Name} #"Boot Image"
-        5000    {$ObjectType = ($ContainerItem).ObjectTypeName; $ObjectName = (Get-CMDeviceCollection -Id $SMSId).Name} # "Device Collection"
-        default {$ObjectType = "unknown object type: $(($ContainerItem).ObjectType)"; $ObjectName = "unknown object name ($SMSId)"}
+    Switch ($ObjectType) {
+        2       {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMPackage -ID $SMSId).Name} # "Package"
+        14      {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMOperatingSystemInstaller -ID $SMSId).Name} # OS Install Package
+        18      {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMOperatingSystemImage -ID $SMSId).Name} # OS Image
+        20      {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMTaskSequence -ID $SMSId).Name} # Task Sequence
+        23      {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMDriverPackage -ID $SMSId).Name} # Driver Package
+        19      {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMBootImage -ID $SMSId).Name} #"Boot Image"
+        5000    {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMDeviceCollection -Id $SMSId).Name} # "Device Collection"
+        5001    {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMUserCollection -Id $SMSId).Name} # "User Collection"
+        default {$ObjectTypeText = "unknown object type: '$($ObjectTypeName)' = $($ObjectType)"; $ObjectName = "unknown object name ($SMSId)"}
     }
 
-    $OutputString = "$ObjectName `t[$ObjectType]"
+    $OutputString = "$ObjectName `t[$ObjectTypeText]"
     #ContainerNodeID of 0 is the root
     While ($ContainerNodeId -ne 0) {
         #Find details of that container
         $ContainerNode = Get-WmiObject -Namespace root/SMS/site_$($SiteCode) -ComputerName $SiteServerName -Query "select * from SMS_ObjectContainerNode where ContainerNodeID = '$($ContainerNodeId)'"
-        #($ContainerNode).Name
         $ContainerName = ($ContainerNode).Name
-        #($ContainerNode).ParentContainerNodeID
         $ContainerNodeId = ($ContainerNode).ParentContainerNodeID
         $OutputString = "$ContainerName\$OutputString"
     }
