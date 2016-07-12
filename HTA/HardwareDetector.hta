@@ -21,8 +21,16 @@
 <!-- 
 Hardware Details thingy
 -----------------------
-1.0 Jun 2015	JPB	First version
+
+Tool to display all detected hardware on a Windows machine, show which are missing drivers, and highlight any
+missing network or video drivers. Mainly written to help troubleshoot use of Windows-to-Go sticks on 
+users' home hardware.
+
+1.0	Jun 2015	JPB	First version
 1.1	Jan 2016	JPB	Add "All Hardware" listing
+1.2	Feb 2016	JPB	Support machines with multiple video cards + Win7 generic Video Driver
+
+James Blatchford, Software Devilry
 -->
 		
 <script language="vbscript" type="text/vbscript">
@@ -30,10 +38,8 @@ Option Explicit
 Dim objWMIService, objShell, objEnvVar, strWMIMachineName, strUserName, strMachineName
 strWMIMachineName = "."
 
-
-'Const VBBINARYCOMPARE = 0 'Binary comparison (case sensitive) 
-'Const VBTEXTCOMPARE = 1 'Text Comparison (case insensitive) 
-'Const VBDATABASECOMPARE = 2 'Compare information inside database 
+Dim strEMailRecipients
+strEMailRecipients = "Helpdesk-Support; Surname, Forename"	' list of valid mail address (semi-colon separated) to send driver details email to
 
 
 Sub Window_Onload
@@ -127,11 +133,15 @@ Sub GetVideoDetails
 		strVidPnPDevID = objVideo.PNPDeviceID
 		strVidProc = objVideo.VideoProcessor
 	Next
-	If strCurrentVidDriver = "Microsoft Basic Display Adapter" Then 
-		strGenericDriver = "False, using built-in generic driver"
-	Else
-		strGenericDriver = "True, using manufacturer's driver"
-	End If
+	Select Case strCurrentVidDriver
+		Case "Microsoft Basic Display Adapter"
+			strGenericDriver = "False, using built-in generic driver"
+		Case "Standard VGA Graphics Adapter"
+			strGenericDriver = "False, using built-in generic driver"
+		Case Else
+			strGenericDriver = "True, using manufacturer's driver"
+	End Select
+
 	videocurrentdriver.innerText = strCurrentVidDriver
 	videogenericdriver.innerText = strGenericDriver
 	videoprocessor.innertext = strVidProc
@@ -223,7 +233,7 @@ End Sub
 
 Sub MailSupport
 	Dim strRecipient, strSubject, strBody
-	strRecipient = "Lloyds-Software-Delivery; Blatchford, James"
+	strRecipient = strEMailRecipients
 	strSubject = "Windows To Go hardware & drivers report for " & strUserName & " on " & strMachineName
 	strBody = hardwaredetails.innerHTML
 	SendAnEmail strRecipient, strSubject, strBody
@@ -252,15 +262,19 @@ End Sub
 
 <!-- 
 PCI Vendor IDs 
-
+0x0718  Imation IronKey
 0x1002  ATI / AMD graphics
+0x102B    Matrox
 0x10DE  Nvidia
-0x163C  intel
+0x10A9  Silicon Graphics
+0x14e4	Broadcom
+0x163C  Intel
+0x5333  S3 Graphics Co., Ltd
 0x8086  Intel
 0x8087  Intel
-0x102B    Matrox
-0x10A9  Silicon Graphics
-0x5333  S3 Graphics Co., Ltd
+
+USB Vendor IDs
+VID_045E Microsoft Corp
 -->
 
 
