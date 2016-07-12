@@ -52,6 +52,7 @@ Sub myVBSClock
 	CGOClock.innerText = WeekdayName(Weekday(DateAdd("h",-6+USDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",-6+USDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",-6+USDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",-6+USDST,CurrentDateUTC),vbShorttime)
 	NYCClock.innerText = WeekdayName(Weekday(DateAdd("h",-5+USDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",-5+USDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",-5+USDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",-5+USDST,CurrentDateUTC),vbShorttime)
 	TORClock.innerText = WeekdayName(Weekday(DateAdd("h",-5+USDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",-5+USDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",-5+USDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",-5+USDST,CurrentDateUTC),vbShorttime)
+	BOGClock.innerText = WeekdayName(Weekday(DateAdd("h",-5,CurrentDateUTC)), True) & " " & Day(DateAdd("h",-5,CurrentDateUTC)) & "/" & Month(DateAdd("h",-5,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",-5,CurrentDateUTC),vbShorttime)
 	RDJClock.innerText = WeekdayName(Weekday(DateAdd("h",-3+BRDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",-3+BRDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",-3+BRDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",-3+BRDST,CurrentDateUTC),vbShorttime)
 	SHAClock.innerText = WeekdayName(Weekday(DateAdd("h",8,CurrentDateUTC)), True) & " " & Day(DateAdd("h",8,CurrentDateUTC)) & "/" & Month(DateAdd("h",8,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",8,CurrentDateUTC),vbShorttime)
 	BJGClock.innerText = WeekdayName(Weekday(DateAdd("h",8,CurrentDateUTC)), True) & " " & Day(DateAdd("h",8,CurrentDateUTC)) & "/" & Month(DateAdd("h",8,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",8,CurrentDateUTC),vbShorttime)
@@ -59,7 +60,7 @@ Sub myVBSClock
 	SINClock.innerText = WeekdayName(Weekday(DateAdd("h",8,CurrentDateUTC)), True) & " " & Day(DateAdd("h",8,CurrentDateUTC)) & "/" & Month(DateAdd("h",8,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",8,CurrentDateUTC),vbShorttime)
 	TKOClock.innerText = WeekdayName(Weekday(DateAdd("h",9,CurrentDateUTC)), True) & " " & Day(DateAdd("h",9,CurrentDateUTC)) & "/" & Month(DateAdd("h",9,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",9,CurrentDateUTC),vbShorttime)
 	SYDClock.innerText = WeekdayName(Weekday(DateAdd("h",10+AUDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",10+AUDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",10+AUDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",10+AUDST,CurrentDateUTC),vbShorttime)
-	DUBClock.innerText = strUKDateTime
+	'DUBClock.innerText = strUKDateTime
 	strEUDateTime = WeekdayName(Weekday(DateAdd("h",1+EUDST,CurrentDateUTC)), True) & " " & Day(DateAdd("h",1+EUDST,CurrentDateUTC)) & "/" & Month(DateAdd("h",1+EUDST,CurrentDateUTC)) &vbCrLf& FormatDateTime(DateAdd("h",1+EUDST,CurrentDateUTC),vbShorttime)
 	MDRClock.innerText = strEUDateTime
 	PARClock.innerText = strEUDateTime
@@ -206,7 +207,8 @@ body	{background-color: #000000;font:14pt arial;color:white;}
 .clocktable	{font-weight: bold}
 table.clocktable span {font-family:monospace; font-size:10pt;}
 .timetravel td	{font-size:10pt}
-.americas	{color: #6EC9E0;}
+.namerica	{color: #6EC9E0;}
+.samerica	{color: #007EA3;}
 .ukeire	{color: #9EA900;}
 .asiapac	{color: #D81F2A;}
 .europe	{color: #AC2973;}
@@ -232,12 +234,13 @@ table.clocktable span {font-family:monospace; font-size:10pt;}
 
 <Table BORDER="1" style="" class="clocktable">
 <TR>
-<TD title="Chicago IL - Central Time US &amp; Canada: GMT-6 (-5 in Summer)" class="americas">Chicago</TD>
-<TD title="USA - New York City &amp; Frankfort KY -  Eastern Time US &amp; Canada: GMT-5 (-4 in Summer)" class="americas">NYC/Kentucky</TD>
-<!-- <TD title="Frankfort, KY -  Eastern Time US &amp; Canada: GMT-5 (-4 in Summer)" class="americas">Kentucky</TD> -->
-<TD title="Canada - Toronto, Ontario &amp; Montreal, Quebec: North American Eastern Time, GMT-5 (-4 in Summer)" class="americas">Toronto/&#8203;Montreal</TD>
-<TD title="Rio de Janeiro, Brazil: GMT-3 (-2 in southern hemisphere summer)" class="americas">Rio de Janeiro</TD>
-<TD title="UK: GMT (GMT+1 in summer)" class="ukeire">UK</TD>
+<TD title="Bogotá, Colombia: GMT-5 (no DST)" class="samerica">Bogotá</TD>
+<TD title="Chicago IL - Central Time US &amp; Canada: GMT-6 (-5 in Summer)" class="namerica">Chicago</TD>
+<TD title="USA - New York City &amp; Frankfort KY -  Eastern Time US &amp; Canada: GMT-5 (-4 in Summer)" class="namerica">NYC/Kentucky</TD>
+<!-- <TD title="Frankfort, KY -  Eastern Time US &amp; Canada: GMT-5 (-4 in Summer)" class="namerica">Kentucky</TD> -->
+<TD title="Canada - Toronto, Ontario &amp; Montreal, Quebec: North American Eastern Time, GMT-5 (-4 in Summer)" class="namerica">Toronto/&#8203;Montreal</TD>
+<TD title="Rio de Janeiro, Brazil: GMT-3 (-2 in southern hemisphere summer)" class="samerica">Rio de Janeiro</TD>
+
 <TD title="China: GMT+8 (no DST)" class="asiapac">Shanghai</TD>
 <TD title="China: GMT+8 (no DST)" class="asiapac">Beijing</TD>
 <TD title="Hong Kong, China: GMT+8 (no DST)" class="asiapac">Hong Kong</TD>
@@ -246,12 +249,12 @@ table.clocktable span {font-family:monospace; font-size:10pt;}
 <TD title="Sydney, NSW: GMT+10 (+11 in southern hemisphere summer)" class="asiapac">Sydney</TD>
 </TR>
 <TR>
-<TD class="americas"><span ID=CGOClock></span></TD>
-<TD class="americas"><span ID=NYCClock></span></TD>
-<!-- <TD class="americas"><span ID=KTYClock></span></TD> -->
-<TD class="americas"><span ID=TORClock></span></TD>
-<TD class="americas"><span ID=RDJClock></span></TD>
-<TD class="ukeire"><span ID=UKClock></span></TD>
+<TD class="samerica"><span ID=BOGClock></span></TD>
+<TD class="namerica"><span ID=CGOClock></span></TD>
+<TD class="namerica"><span ID=NYCClock></span></TD>
+<!-- <TD class="namerica"><span ID=KTYClock></span></TD> -->
+<TD class="namerica"><span ID=TORClock></span></TD>
+<TD class="samerica"><span ID=RDJClock></span></TD>
 <TD class="asiapac"><span ID=SHAClock></span></TD>
 <TD class="asiapac"><span ID=BJGClock></span></TD>
 <TD class="asiapac"><span ID=HKOClock></span></TD>
@@ -264,7 +267,8 @@ table.clocktable span {font-family:monospace; font-size:10pt;}
 <span style="font-size:4pt">&nbsp; </span>
 <TABLE BORDER="1" class="clocktable europe">
 <TR>
-<TD title="Dublin, Ireland: GMT (GMT+1 in summer)" class="ukeire">Dublin</TD>
+<TD title="London, UK: GMT (GMT+1 in summer) + Dublin, Ireland: GMT (GMT+1 in summer)" class="ukeire">UK/Dublin</TD>
+<!-- <TD title="Dublin, Ireland: GMT (GMT+1 in summer)" class="ukeire">Dublin</TD> -->
 <TD title="Madrid, Spain: CET: GMT+1 (+2 in summer)">Madrid</TD>
 <TD title="Paris, France: CET: GMT+1 (+2 in summer)">Paris</TD>
 <TD title="Rotterdam, Netherlands: CET: GMT+1 (+2 in summer)">Rotterdam</TD>
@@ -278,7 +282,8 @@ table.clocktable span {font-family:monospace; font-size:10pt;}
 <TD title="Dubai, UAE: Arabian Standard Time: GMT+4 (no DST)" class="mideast">Dubai</TD>
 </TR>
 <TR>
-<TD class="ukeire"><span ID=DUBClock></span></TD>
+<TD class="ukeire"><span ID=UKClock></span></TD>
+<!-- <TD class="ukeire"><span ID=DUBClock></span></TD> -->
 <TD><span ID=MDRClock></span></TD>
 <TD><span ID=PARClock></span></TD>
 <TD><span ID=RTDClock></span></TD>
