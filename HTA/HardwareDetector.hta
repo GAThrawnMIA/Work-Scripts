@@ -15,7 +15,7 @@
 		SHOWINTASKBAR="yes"
 		SINGLEINSTANCE="yes" 
 		SYSMENU="yes"
-		VERSION="1.1"
+		VERSION="1.3"
 		WINDOWSTATE="normal" />
 
 <!-- 
@@ -29,6 +29,7 @@ users' home hardware.
 1.0	Jun 2015	JPB	First version
 1.1	Jan 2016	JPB	Add "All Hardware" listing
 1.2	Feb 2016	JPB	Support machines with multiple video cards + Win7 generic Video Driver
+1.3	Sep 2016	JPB	Save report to disk as HTM
 
 James Blatchford, Software Devilry
 -->
@@ -230,6 +231,29 @@ Sub OpenExternalProg(strProgram)
 	objShell.Run(strPath)
 End Sub
 
+Sub SaveReport
+	'Dump report contents to (HTML) text file
+	Dim strOutputPath, strOutputfile, strHTMLContent, objFSO, outputTextFile, objExecClip, objIn
+	strOutputfile = "\HardwareDetails.htm"
+	document.getElementById("otherhardware").style.display = "block"
+	document.getElementById("allhardware").style.display = "block"
+	strHTMLContent = hardwaredetails.innerHTML
+	strHTMLContent = "<html><body>" & strHTMLContent & "</body></html>"
+	Set objFSO = CreateObject("Scripting.FileSystemObject")
+	strOutputPath = objFSO.GetSpecialFolder(2)
+	'Copy path to clipboard
+	Set objExecClip	= objShell.Exec("%windir%\system32\clip.exe")
+	Set objIn = objExecClip.stdIn
+	objIn.WriteLine strOutputPath & strOutputfile
+	objIn.Close
+	'Save output file
+	MsgBox "Saving output to: " & strOutputPath & strOutputfile
+		Set outputTextFile = objFSO.CreateTextFile(strOutputPath & strOutputfile, True, True)
+	outputTextFile.WriteLine (strHTMLContent)
+	outputTextFile.Close
+	'Launch IE window with file
+	objShell.Run strOutputPath & strOutputfile
+End Sub
 
 Sub MailSupport
 	Dim strRecipient, strSubject, strBody
@@ -406,11 +430,12 @@ p, table, td, th, button	{font-size: 1em}
 
 </div>
 <p align="center"><button onClick="MailSupport()" class="w8-button w8-l-blue"><span class="symbols icon">&#xE120;</span> <br /> Send Details</button>
+<button onClick="SaveReport()" class="w8-button w8-yellow"><span class="symbols icon">&#xE159;</span> <br /> Save Details</button>
 <button onClick="OpenExternalProg('SoftwareCentre')" class="w8-button w8-green"><span class="symbols icon">&#xE2B4;</span> <br /> Open Software Centre</button>
 <button onClick="window.close()" title="Close Window" class="w8-button w8-red"><span class="symbols icon">&#xE10A;</span> <br /> Close Window</button>  
 </p>
 
 
-<p><!-- James Blatchford, -->Software Devilry, 2015</p>
+<p><!-- James Blatchford, -->Software Devilry, 2016</p>
 </body>
 </html>
