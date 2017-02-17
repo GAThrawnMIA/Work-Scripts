@@ -22,6 +22,8 @@ Function Get-SCCMCollections {
    Set-Location -LiteralPath "$((Get-PSDrive -PSProvider CMSite).Name):"
 
    Written by James Blatchford, February 2017
+.LINK
+   https://github.com/GAThrawnMIA/Work-Scripts/blob/master/PowerShell/Get-SCCMCollections.ps1
 #>
     param(
     [Parameter(Mandatory=$true,Position=1)]
@@ -35,7 +37,13 @@ Function Get-SCCMCollections {
     [string]$resourceId,
 
     [Parameter(Mandatory=$false,ParameterSetName='Name')]
-    [switch]$noListMultiple
+    [switch]$noListMultiple,
+
+    [Parameter()]
+    [string]$sccmServerName = "sccm",
+
+    [Parameter()]
+    [string]$sccmSiteCode = (Get-PSDrive -PSProvider CMSite).Name
     )
 
     If ($type -eq "User") {
@@ -55,7 +63,7 @@ Function Get-SCCMCollections {
         }
         $Users | Foreach {
             $ResourceID = $_.ResourceID
-            $Collections = Get-WmiObject -ComputerName sccm -Namespace "root\sms\site_LOL" -Class "SMS_FullCollectionMembership" -Filter "ResourceId = '$($_.ResourceId)'" | Select-Object -Property CollectionID,IsDirect,Name
+            $Collections = Get-WmiObject -ComputerName $sccmServerName -Namespace "root\sms\site_$sccmSiteCode" -Class "SMS_FullCollectionMembership" -Filter "ResourceId = '$($_.ResourceId)'" | Select-Object -Property CollectionID,IsDirect,Name
             $Collections | Foreach {
                 $CollectionName = Get-CMUserCollection -Id $_.CollectionID | Select-Object -Property CollectionID,Name
                 New-Object -TypeName psobject -Property (@{"ResourceName" = $_.Name; "ResourceId" = $ResourceID; "CollectionName" = $CollectionName.Name; "CollectionID" = $_.CollectionID; "IsDirect" = $_.IsDirect})
@@ -78,7 +86,7 @@ Function Get-SCCMCollections {
         }
         $Devices | Foreach {
             $ResourceID = $_.ResourceID
-            $Collections = Get-WmiObject -ComputerName sccm -Namespace "root\sms\site_LOL" -Class "SMS_FullCollectionMembership" -Filter "ResourceId = '$($_.ResourceId)'" | Select-Object -Property CollectionID,IsDirect,Name
+            $Collections = Get-WmiObject -ComputerName $sccmServerName -Namespace "root\sms\site_$sccmSiteCode" -Class "SMS_FullCollectionMembership" -Filter "ResourceId = '$($_.ResourceId)'" | Select-Object -Property CollectionID,IsDirect,Name
             $Collections | Foreach {
                 $CollectionName = Get-CMDeviceCollection -Id $_.CollectionID | Select-Object -Property CollectionID,Name
                 New-Object -TypeName psobject -Property (@{"ResourceName" = $_.Name; "ResourceId" = $ResourceID; "CollectionName" = $CollectionName.Name; "CollectionID" = $_.CollectionID; "IsDirect" = $_.IsDirect})
