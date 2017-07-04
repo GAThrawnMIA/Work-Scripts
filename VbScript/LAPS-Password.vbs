@@ -17,7 +17,7 @@ Wscript.echo "Password Last Set: " & arrResults(3)
 Wscript.echo "LAPS Password Expires: " & arrResults(4)
 
 Function LAPSDetails (strComputer)
-	Dim objConnection, objCommand, objRecordSet, objShell, lngBiasKey, lngBias
+	Dim objConnection, objCommand, objRecordSet, lngBias
 	Const ADS_SCOPE_SUBTREE = 2
 
 	Set objConnection = CreateObject("ADODB.Connection")
@@ -34,20 +34,9 @@ Function LAPSDetails (strComputer)
 	objCommand.Properties("Searchscope") = ADS_SCOPE_SUBTREE
 	Set objRecordSet = objCommand.Execute
 	objRecordSet.MoveFirst
-
-	' Obtain local time zone bias from machine registry.
-	' This bias changes with Daylight Savings Time.
-	Set objShell = CreateObject("Wscript.Shell")
-	lngBiasKey = objShell.RegRead("HKLM\System\CurrentControlSet\Control\" _
-	    & "TimeZoneInformation\ActiveTimeBias")
-	If (UCase(TypeName(lngBiasKey)) = "LONG") Then
-	    lngBias = lngBiasKey
-	ElseIf (UCase(TypeName(lngBiasKey)) = "VARIANT()") Then
-	    lngBias = 0
-	    For k = 0 To UBound(lngBiasKey)
-		lngBias = lngBias + (lngBiasKey(k) * 256^k)
-	    Next
-	End If
+	
+	lngBias = GetLocaltimeBias()
+	
 	Dim strOutName,strOutOS,strOutLapsPw,strOutPwdLastSet,strOutLapsPwExpiry
 	strOutPwdLastSet = ""
 	strOutLapsPwExpiry = ""				
@@ -70,6 +59,24 @@ Function LAPSDetails (strComputer)
 		objRecordSet.MoveNext
 	Loop
 	LAPSDetails = Array(strOutName,strOutOS,strOutLapsPw,strOutPwdLastSet,strOutLapsPwExpiry)
+End Function
+
+Function GetLocaltimeBias()						
+	' Obtain local time zone bias from machine registry.
+	' This bias changes with Daylight Savings Time.
+	Dim objShell, lngBias, lngBiasKey
+	Set objShell = CreateObject("Wscript.Shell")
+	lngBiasKey = objShell.RegRead("HKLM\System\CurrentControlSet\Control\" _
+	    & "TimeZoneInformation\ActiveTimeBias")
+	If (UCase(TypeName(lngBiasKey)) = "LONG") Then
+	    lngBias = lngBiasKey
+	ElseIf (UCase(TypeName(lngBiasKey)) = "VARIANT()") Then
+	    lngBias = 0
+	    For k = 0 To UBound(lngBiasKey)
+		lngBias = lngBias + (lngBiasKey(k) * 256^k)
+	    Next
+	End If
+	GetLocaltimeBias = lngBias
 End Function
 
 Function Integer8Date(ByVal objDate, ByVal lngBias)
