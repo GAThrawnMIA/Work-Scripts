@@ -3,61 +3,74 @@
 ' Usage: cscript /nologo LAPS-Password.vbs
 
 Option Explicit
-Dim strLDAPDomain, strComputer
-Dim objConnection, objCommand, objRecordSet, objShell, lngBiasKey, lngBias
+Dim strLDAPDomain, strComputer, arrResults
 
 strLDAPDomain = "LDAP://DC=Example,DC=com"
 strComputer = InputBox ("Machine name", "Computer Name")
 
-Const ADS_SCOPE_SUBTREE = 2
+arrResults = LAPSDetails(strComputer)
 
-Set objConnection = CreateObject("ADODB.Connection")
-Set objCommand = CreateObject("ADODB.Command")
-objConnection.Provider = "ADsDSOObject"
-objConnection.Open "Active Directory Provider"
+Wscript.Echo "Computer Name: " & arrResults(0)
+Wscript.Echo "OS Version: " & arrResults(1)
+Wscript.Echo "LAPS Password: " & arrResults(2)
+Wscript.echo "Password Last Set: " & arrResults(3)
+Wscript.echo "LAPS Password Expires: " & arrResults(4)
 
-' Search for Specific Computer Accounts
-Set objCommand.ActiveConnection = objConnection
-objCommand.CommandText = _
-"Select Name, operatingSystem, operatingSystemVersion, Description, ms-Mcs-AdmPwd, ms-Mcs-AdmPwdExpirationTime, pwdLastSet from '" & _
-strLDAPDomain &"' where objectClass='computer' and Name = '" & strComputer & "'"
-objCommand.Properties("Page Size") = 1000
-objCommand.Properties("Searchscope") = ADS_SCOPE_SUBTREE
-Set objRecordSet = objCommand.Execute
-objRecordSet.MoveFirst
+Function LAPSDetails (strComputer)
+	Dim objConnection, objCommand, objRecordSet, objShell, lngBiasKey, lngBias
+	Const ADS_SCOPE_SUBTREE = 2
 
-' Obtain local time zone bias from machine registry.
-' This bias changes with Daylight Savings Time.
-Set objShell = CreateObject("Wscript.Shell")
-lngBiasKey = objShell.RegRead("HKLM\System\CurrentControlSet\Control\" _
-    & "TimeZoneInformation\ActiveTimeBias")
-If (UCase(TypeName(lngBiasKey)) = "LONG") Then
-    lngBias = lngBiasKey
-ElseIf (UCase(TypeName(lngBiasKey)) = "VARIANT()") Then
-    lngBias = 0
-    For k = 0 To UBound(lngBiasKey)
-        lngBias = lngBias + (lngBiasKey(k) * 256^k)
-    Next
-End If
+	Set objConnection = CreateObject("ADODB.Connection")
+	Set objCommand = CreateObject("ADODB.Command")
+	objConnection.Provider = "ADsDSOObject"
+	objConnection.Open "Active Directory Provider"
 
-Do Until objRecordSet.EOF
-	Wscript.Echo "Computer Name: " & objRecordSet.Fields("Name").Value
-	Wscript.Echo "OS Version: " & objRecordSet.Fields("operatingSystem").Value & " - " & objRecordSet.Fields("operatingSystemVersion").Value
-	Wscript.Echo "LAPS Password: " & objRecordSet.Fields("ms-Mcs-AdmPwd").Value
-	Dim objDatePwdLastSet,dtmPwdLastSet
-	If (TypeName(objRecordSet.Fields("pwdLastSet").Value) = "Object") Then
-		Set objDatePwdLastSet = objRecordSet.Fields("pwdLastSet").value
-		dtmPwdLastSet = Integer8Date(objDatePwdLastSet, lngBias)
-		Wscript.echo "Password Last Set: " & dtmPwdLastSet
+	' Search for Specific Computer Accounts
+	Set objCommand.ActiveConnection = objConnection
+	objCommand.CommandText = _
+	"Select Name, operatingSystem, operatingSystemVersion, Description, ms-Mcs-AdmPwd, ms-Mcs-AdmPwdExpirationTime, pwdLastSet from '" & _
+	strLDAPDomain &"' where objectClass='computer' and Name = '" & strComputer & "'"
+	objCommand.Properties("Page Size") = 1000
+	objCommand.Properties("Searchscope") = ADS_SCOPE_SUBTREE
+	Set objRecordSet = objCommand.Execute
+	objRecordSet.MoveFirst
+
+	' Obtain local time zone bias from machine registry.
+	' This bias changes with Daylight Savings Time.
+	Set objShell = CreateObject("Wscript.Shell")
+	lngBiasKey = objShell.RegRead("HKLM\System\CurrentControlSet\Control\" _
+	    & "TimeZoneInformation\ActiveTimeBias")
+	If (UCase(TypeName(lngBiasKey)) = "LONG") Then
+	    lngBias = lngBiasKey
+	ElseIf (UCase(TypeName(lngBiasKey)) = "VARIANT()") Then
+	    lngBias = 0
+	    For k = 0 To UBound(lngBiasKey)
+		lngBias = lngBias + (lngBiasKey(k) * 256^k)
+	    Next
 	End If
-	Dim objDatePwdExpire,dtmPwdExpire
-	If (TypeName(objRecordSet.Fields("ms-Mcs-AdmPwdExpirationTime").Value) = "Object") Then
-		Set objDatePwdExpire = objRecordSet.Fields("ms-Mcs-AdmPwdExpirationTime").value
-		dtmPwdExpire = Integer8Date(objDatePwdExpire, lngBias)
-		Wscript.echo "LAPS Password Expires: " & dtmPwdExpire
-	End If
-	objRecordSet.MoveNext
-Loop
+	Dim strOutName,strOutOS,strOutLapsPw,strOutPwdLastSet,strOutLapsPwExpiry
+	strOutPwdLastSet = ""
+	strOutLapsPwExpiry = ""				
+	Do Until objRecordSet.EOF
+		strOutName = objRecordSet.Fields("Name").Value
+		strOutOS = objRecordSet.Fields("operatingSystem").Value & " - " & objRecordSet.Fields("operatingSystemVersion").Value
+		strOutLapsPw = objRecordSet.Fields("ms-Mcs-AdmPwd").Value
+		Dim objDatePwdLastSet,dtmPwdLastSet
+		If (TypeName(objRecordSet.Fields("pwdLastSet").Value) = "Object") Then
+			Set objDatePwdLastSet = objRecordSet.Fields("pwdLastSet").value
+			dtmPwdLastSet = Integer8Date(objDatePwdLastSet, lngBias)
+			strOutPwdLastSet = dtmPwdLastSet
+		End If
+		Dim objDatePwdExpire,dtmPwdExpire
+		If (TypeName(objRecordSet.Fields("ms-Mcs-AdmPwdExpirationTime").Value) = "Object") Then
+			Set objDatePwdExpire = objRecordSet.Fields("ms-Mcs-AdmPwdExpirationTime").value
+			dtmPwdExpire = Integer8Date(objDatePwdExpire, lngBias)
+			strOutLapsPwExpiry = dtmPwdExpire
+		End If
+		objRecordSet.MoveNext
+	Loop
+	LAPSDetails = Array(strOutName,strOutOS,strOutLapsPw,strOutPwdLastSet,strOutLapsPwExpiry)
+End Function
 
 Function Integer8Date(ByVal objDate, ByVal lngBias)
     ' Function to convert Integer8 (64-bit) value to a date, adjusted for
