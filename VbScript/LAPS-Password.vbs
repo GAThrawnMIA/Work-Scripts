@@ -1,4 +1,5 @@
 ' Script to query Active Directory for a machine's LAPS password and related details
+' More info: http://gathrawn.jard.co.uk/2017/07/retrieve-laps-microsofts-local-admin.html
 ' Usage: cscript /nologo LAPS-Password.vbs
 
 Option Explicit
