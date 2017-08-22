@@ -98,6 +98,7 @@ Function Get-SCCMContainerHierarchy {
     
     Switch ($ObjectType) {
         2       {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMPackage -ID $SMSId).Name} # Package
+        7       {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMQuery -ID $SMSId).Name} # Query
         14      {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMOperatingSystemInstaller -ID $SMSId).Name} # OS Install Package
         18      {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMOperatingSystemImage -ID $SMSId).Name} # OS Image
         20      {$ObjectTypeText = $ObjectTypeName; $ObjectName = (Get-CMTaskSequence -ID $SMSId).Name} # Task Sequence
