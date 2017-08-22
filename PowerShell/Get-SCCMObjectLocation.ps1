@@ -63,7 +63,17 @@ root\Dell PowerEdge Drivers OM7.3.0\PE1950-Microsoft Windows 2008 R2 SP1-OM7.3 	
         }
         Else
         {
-            Return "root\$(($ObjectName).Name)"
+            If ($ObjectName -is [array]) {
+                Write-Warning "Multiple objects with ID: $SMSId"
+                Foreach ($Object in $ObjectName) {
+                    $ObjectOutputString = "$ObjectOutputString`nroot\$(($Object).Name)"
+                    $Object
+                }
+                Return $ObjectOutputString
+            }
+            Else {
+                Return "root\$(($ObjectName).Name)"
+            }
             break;
         }
     }
