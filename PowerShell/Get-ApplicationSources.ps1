@@ -3,6 +3,7 @@
 $CSVOutPath = 'c:\temp\AppSrc.csv'
 
 #Change to your site's ConfigMgr PSDrive before running this script
+
 #Get each Application, then get the source path from each Applications's Deployment Types
 Write-Host "Fetching application details - this takes a few minutes, please wait...`n"
 
@@ -12,10 +13,9 @@ Write-Host "$AppCount applications found.`n"
 
 #Iterate over the apps list pulling out the details for each app. Takes a couple of minutes.
 $i = 1
-$AppSourceList = ForEach($App in $Applications)
+$AppSourceList = ForEach ($App in $Applications)
 {
     Write-Progress -Activity 'Checking apps and deployment types' -Id 1 -PercentComplete $(($i / $AppCount) * 100) -CurrentOperation "app $i / $AppCount"
-    #$PackageXml = $null
     $PackageXml = [xml]$App.SDMPackageXML
     #An app can have multiple Deployment Types, each with their own source location. DT details are stored in the XML properties
     ForEach($DT in $PackageXml.AppMgmtDigest.DeploymentType) {
